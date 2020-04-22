@@ -22,6 +22,18 @@ extension UserDefaults {
 		return nil
 	}
 
+	private func _get<Value: RawRepresentable>(_ key: String) -> Value? {
+		if UserDefaults.isNativelySupportedType(Value.self) {
+			return object(forKey: key) as? Value
+		}
+		
+		guard let rawValue = object(forKey: key) as? Value.RawValue else {
+			return nil
+		}
+		
+		return Value(rawValue: rawValue)
+	}
+	
 	@available(iOS 11.0, macOS 10.13, tvOS 11.0, watchOS 4.0, iOSApplicationExtension 11.0, macOSApplicationExtension 10.13, tvOSApplicationExtension 11.0, watchOSApplicationExtension 4.0, *)
 	private func _get<Value: NSSecureCoding>(_ key: String) -> Value? {
 		if UserDefaults.isNativelySupportedType(Value.self) {
@@ -70,6 +82,15 @@ extension UserDefaults {
 		set(_encode(value), forKey: key)
 	}
 
+	private func _set<Value: RawRepresentable>(_ key: String, to value: Value) {
+		if UserDefaults.isNativelySupportedType(Value.self) {
+			set(value, forKey: key)
+			return
+		}
+
+		set(value.rawValue, forKey: key)
+	}
+	
 	@available(iOS 11.0, macOS 10.13, tvOS 11.0, watchOS 4.0, iOSApplicationExtension 11.0, macOSApplicationExtension 10.13, tvOSApplicationExtension 11.0, watchOSApplicationExtension 4.0, *)
 	private func _set<Value: NSSecureCoding>(_ key: String, to value: Value) {
 		// TODO: Handle nil here too.
@@ -82,6 +103,13 @@ extension UserDefaults {
 	}
 
 	public subscript<Value: Codable>(key: Defaults.Key<Value>) -> Value {
+		get { _get(key.name) ?? key.defaultValue }
+		set {
+			_set(key.name, to: newValue)
+		}
+	}
+	
+	public subscript<Value: RawRepresentable>(key: Defaults.RawRepresentableKey<Value>) -> Value {
 		get { _get(key.name) ?? key.defaultValue }
 		set {
 			_set(key.name, to: newValue)

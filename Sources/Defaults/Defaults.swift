@@ -17,6 +17,8 @@ public enum Defaults {
 	public class Keys {
 		public typealias Key = Defaults.Key
 
+		public typealias RawRepresentableKey = Defaults.RawRepresentableKey
+		
 		@available(iOS 11.0, macOS 10.13, tvOS 11.0, watchOS 4.0, iOSApplicationExtension 11.0, macOSApplicationExtension 10.13, tvOSApplicationExtension 11.0, watchOSApplicationExtension 4.0, *)
 		public typealias NSSecureCodingKey = Defaults.NSSecureCodingKey
 
@@ -48,6 +50,33 @@ public enum Defaults {
 				suite.register(defaults: [key: defaultValue])
 			} else if let value = suite._encode(defaultValue) {
 				suite.register(defaults: [key: value])
+			}
+		}
+	}
+
+	// a clone of Key except in how it registers the default
+	public final class RawRepresentableKey<Value: RawRepresentable>: Keys, _DefaultsBaseKey {
+		public let name: String
+		public let defaultValue: Value
+		public let suite: UserDefaults
+
+		/// Create a defaults key.
+		public init(_ key: String, default defaultValue: Value, suite: UserDefaults = .standard) {
+			self.name = key
+			self.defaultValue = defaultValue
+			self.suite = suite
+
+			super.init()
+
+			if (defaultValue as? _DefaultsOptionalType)?.isNil == true {
+				return
+			}
+
+			// Sets the default value in the actual UserDefaults, so it can be used in other contexts, like binding.
+			if UserDefaults.isNativelySupportedType(Value.self) {
+				suite.register(defaults: [key: defaultValue])
+			} else {
+				suite.register(defaults: [key: defaultValue.rawValue])
 			}
 		}
 	}
@@ -93,6 +122,14 @@ public enum Defaults {
 
 	/// Access a defaults value using a `Defaults.Key`.
 	public static subscript<Value: Codable>(key: Key<Value>) -> Value {
+		get { key.suite[key] }
+		set {
+			key.suite[key] = newValue
+		}
+	}
+	
+	/// Access a defaults value using a `Defaults.RawRepresentableKey`.
+	public static subscript<Value: RawRepresentable>(key: RawRepresentableKey<Value>) -> Value {
 		get { key.suite[key] }
 		set {
 			key.suite[key] = newValue

@@ -13,6 +13,13 @@ enum FixtureEnum: String, Codable {
 	case oneHour = "1 Hour"
 }
 
+// not Codable, but RawRepresentable
+enum FixtureEnum2: Int {
+	case tenMinutes = 10
+	case halfHour = 30
+	case oneHour = 60
+}
+
 let fixtureDate = Date()
 
 @available(iOS 11.0, macOS 10.13, tvOS 11.0, watchOS 4.0, iOSApplicationExtension 11.0, macOSApplicationExtension 10.13, tvOSApplicationExtension 11.0, watchOSApplicationExtension 4.0, *)
@@ -42,7 +49,12 @@ extension Defaults.Keys {
 	static let `enum` = Key<FixtureEnum>("enum", default: .oneHour)
 	static let data = Key<Data>("data", default: Data([]))
 	static let date = Key<Date>("date", default: fixtureDate)
-
+	
+	// RawRepresentable
+	static let enum2a = RawRepresentableKey<FixtureEnum2>("enum2a", default: .tenMinutes)
+	static let enum2b = RawRepresentableKey<FixtureEnum2>("enum2b", default: .halfHour)
+	static let enum2c = RawRepresentableKey<FixtureEnum2>("enum2c", default: .oneHour)
+	
 	// NSSecureCoding
 	@available(iOS 11.0, macOS 10.13, tvOS 11.0, watchOS 4.0, iOSApplicationExtension 11.0, macOSApplicationExtension 10.13, tvOSApplicationExtension 11.0, watchOSApplicationExtension 4.0, *)
 	static let persistentHistoryValue = ExamplePersistentHistory(value: "ExampleToken")
@@ -122,6 +134,20 @@ final class DefaultsTests: XCTestCase {
 
 	func testEnumType() {
 		XCTAssertEqual(Defaults[.enum], FixtureEnum.oneHour)
+		
+		// changes
+		Defaults[.enum] = .halfHour
+		XCTAssertEqual(Defaults[.enum], FixtureEnum.halfHour)
+	}
+	
+	func testEnumTypes2() {
+		XCTAssertEqual(Defaults[.enum2a], FixtureEnum2.tenMinutes)
+		XCTAssertEqual(Defaults[.enum2b], FixtureEnum2.halfHour)
+		XCTAssertEqual(Defaults[.enum2c], FixtureEnum2.oneHour)
+		
+		// changes
+		Defaults[.enum2a] = .halfHour
+		XCTAssertEqual(Defaults[.enum2a], FixtureEnum2.halfHour)
 	}
 
 	func testDataType() {
